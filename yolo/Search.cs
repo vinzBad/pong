@@ -69,7 +69,9 @@ namespace yolo
 		}
 
 		private int heuristicCost(Tile tile) {
-			return (Math.Abs(tile.X - goal.X) + Math.Abs(tile.Y - goal.Y)) * (cost+4);
+
+			return ((int) (tile.X - goal.X ) * (tile.X - goal.X ) + (tile.Y - goal.Y ) * (tile.Y - goal.Y )) * cost;
+			// return (Math.Abs(tile.X - goal.X) + Math.Abs(tile.Y - goal.Y)) * (cost+4);
 		}
 
 		private Tile cheapestTile() {
