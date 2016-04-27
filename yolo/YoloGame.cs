@@ -25,32 +25,24 @@ namespace yolo
 		SpriteBatch spriteBatch;
 		Texture2D pixel;
 
-		bool[,] map;
+		Map map;
+		Search search;
+
 		int map_width = 40;
 		int map_height = 44;
-		int tile_size = 24;
-		int player_size = 12;
-		int player_x = 1;
-		int player_y = 1;
 
+		Actor player;
+		Actor goal;
+
+		/*
 		int mouse_x = 0;
 		int mouse_y = 0;
-
-		int goal_x = 5;
-		int goal_y = 3;
-		int cost = 5;
-
-		List<Node> openList = new List<Node>();
-		List<Node> closedList = new List<Node>();
-		List<Node> path = new List<Node> ();
-
-		Matrix cam = Matrix.Identity;
-		float cam_speed = 50;
+		*/
+	
 
 		Camera camera = new Camera ();
 
-		bool goal_found = false;
-
+	
 		public YoloGame ()
 		{
 			graphics = new GraphicsDeviceManager (this);
@@ -67,17 +59,8 @@ namespace yolo
 		{
 			IsMouseVisible = true;
 			// TODO: Add your initialization logic here
-			map = new bool[map_width,map_height];
-			for (int x = 0; x < map_width; x++) {
-				for (int y = 0; y < map_height; y++) {
-					if ((0 < x  && x < map_width - 1) && (0 < y && y< map_height - 1)) {
-						map [x,y] = false;
-					} else {
-						map [x, y] = true;
-					}
-				}
-					
-			}
+			//map = new bool[map_width,map_height];
+
 			base.Initialize ();
 		}
 
@@ -96,131 +79,42 @@ namespace yolo
 			camera.ViewportWidth  = graphics.GraphicsDevice.Viewport.Width;
 			camera.ViewportHeight = graphics.GraphicsDevice.Viewport.Height;
 
+			map = new Map (map_width, map_height, 18);
+
+			for (int x = 0; x < map_width; x++) {
+				for (int y = 0; y < map_height; y++) {
+					if ((0 < x && x < map_width - 1) && (0 < y && y < map_height - 1)) {
+						map.Get (x, y).Type = TileType.FLOOR;
+					} else {
+						map.Get (x, y).Type = TileType.WALL;
+					}
+				}
+			
+			}
+
+			player = new Actor () {
+				X = 3,
+				Y = 4,
+				Width = 6,
+				Height = 12,
+				Color = Color.Green
+			};
+
+			goal = new Actor () {
+				X = 10,
+				Y = 12, 
+				Width = 12,
+				Height = 12,
+				Color = Color.Red
+			};
+
+			map.Add (player);
+			map.Add (goal);
+
+			search = new Search (map);
+
 
 			//TODO: use this.Content to load your game content here 
-		}
-
-		void IterativeSearch() {
-			var current = GetCheapestNode (openList);
-
-			if (current.X == goal_x && current.Y == goal_y) {
-				goal_found = true;
-				while (current.Parent != null) {
-					path.Add (current);
-					current = current.Parent;
-				}
-
-				return;
-			}
-
-
-
-			var neighbors = GetWalkableNeighbors (current);
-
-			foreach (var node in neighbors) {
-
-				if (closedList.Exists( n=> n.X == node.X && n.Y == node.Y )) {
-					continue;
-				}
-
-				if (openList.Exists( n=> n.X == node.X && n.Y == node.Y )) {
-					if (current.G + cost < node.G) {
-						node.G = current.G + cost;
-						node.F = node.H + node.G;
-						node.Parent = current;
-					}
-
-				} else {
-					node.Parent = current;
-					node.G = current.G + cost;
-					node.H = (Math.Abs (node.X - goal_x) + Math.Abs (node.Y - goal_y) )* (cost+2);
-					node.F = node.H + cost;
-					openList.Add (node);
-				}
-			}
-			openList.RemoveAll (n => n.X == current.X && n.Y == current.Y); // (current);
-			closedList.Add (current);
-		}
-
-
-
-		Node GetCheapestNode(List<Node> nodes) {
-			var min = new Node () { F = int.MaxValue };
-
-			foreach (var node in nodes) {
-				if (node.F < min.F) {
-					min = node;
-				}
-			}
-
-			return min;
-		}
-
-		/// <summary>
-		/// Gets the walkable neighbors of a node.
-		/// </summary>
-		/// <returns>The walkable neighbors.</returns>
-		/// <param name="node">Node.</param>
-		List<Node> GetWalkableNeighbors(Node node) {
-			var nodes = new List<Node> (8);
-			var neighbor = GetWalkableNode(node.X -1, node.Y);
-
-			if (neighbor != null) {
-				nodes.Add (neighbor);
-			}
-
-			neighbor = GetWalkableNode (node.X + 1, node.Y);
-
-			if (neighbor != null) {
-				nodes.Add (neighbor);
-			}
-
-			neighbor = GetWalkableNode (node.X, node.Y -1);
-
-			if (neighbor != null) {
-				nodes.Add (neighbor);
-			}
-
-			neighbor = GetWalkableNode (node.X, node.Y +1);
-
-			if (neighbor != null) {
-				nodes.Add (neighbor);
-			}
-			/*
-			neighbor = GetWalkableNode (node.X - 1, node.Y - 1);
-
-			if (neighbor != null) {
-				nodes.Add (neighbor);
-			}
-
-			neighbor = GetWalkableNode (node.X + 1, node.Y - 1);
-
-			if (neighbor != null) {
-				nodes.Add (neighbor);
-			}
-
-			neighbor = GetWalkableNode (node.X + 1, node.Y + 1);
-
-			if (neighbor != null) {
-				nodes.Add (neighbor);
-			}
-
-			neighbor = GetWalkableNode (node.X - 1, node.Y + 1);
-
-			if (neighbor != null) {
-				nodes.Add (neighbor);
-			}
-			*/
-			return nodes;
-		}
-
-		Node GetWalkableNode (int x, int y) {
-			if (x >= 0 && x < map_width && y >= 0 && y < map_height) {
-				if (map [x, y] != true) {
-					return new Node () { X = x, Y = y };
-				}
-			}
-			return null;
 		}
 
 		bool Inside(int x, int y) {
@@ -242,81 +136,60 @@ namespace yolo
             
 			// TODO: Add your update logic here
 			var ks = Keyboard.GetState();
-			var ms = Mouse.GetState ();
-			bool doSearch = false;
-			Vector2 mouse = new Vector2 (ms.Position.X, ms.Position.Y);
-			mouse_x = (int)mouse.X / tile_size;
-			mouse_y = (int)mouse.Y / tile_size;
+			 var ms = Mouse.GetState ();
 
-			if (!Inside(mouse_x, mouse_y) ){
-				mouse_x = 0;
-				mouse_y = 0;
-			}
+			bool doSearch = false;
+
+			Vector2 mouse = new Vector2 (ms.Position.X, ms.Position.Y);
 
 			if (ms.LeftButton == ButtonState.Pressed) {
-				int x = ms.Position.X / tile_size;
-				int y = ms.Position.Y / tile_size;
-				if (Inside (x, y)) {
-					map [x, y] = true;
-					doSearch = true;
-				}
+				var tile = map.WorldGet (mouse);
+				if (tile != null)
+					tile.Type = TileType.WALL;
 			}
 
 			if (ms.RightButton == ButtonState.Pressed) {
-				int x = ms.Position.X / tile_size;
-				int y = ms.Position.Y / tile_size;
-
-				if (Inside (x, y)) {
-					map [x, y] = false;
-					doSearch = true;
-				}
+				var tile = map.WorldGet (mouse);
+				if (tile != null)
+					tile.Type = TileType.FLOOR;
 			}
-			int prev_x = player_x;
-			int prev_y = player_y;
+
+			int prev_x = player.X;
+			int prev_y = player.Y;
 
 			if (ks.IsKeyDown(Keys.D)) {
-				player_x += 1;
+				player.X += 1;
 			}
 			if (ks.IsKeyDown(Keys.A)) {
-				player_x -= 1;
+				player.X -= 1;
 			}
 			if (ks.IsKeyDown(Keys.W)) {
-				player_y -= 1;
+				player.Y -= 1;
 			}
 			if (ks.IsKeyDown(Keys.S)) {
-				player_y += 1;
+				player.Y += 1;
+
+			
 			}
 
 		
 
-			if (map [player_x, player_y] == true) {
-				player_x = prev_x;
-				player_y = prev_y;
+			if (map.Get(player.X, player.Y).Type == TileType.WALL) {
+				player.X = prev_x;
+				player.Y = prev_y;
 			}
 
-			camera.CenterOn (new Vector2 (player_x * tile_size, player_y * tile_size));
+			//camera.CenterOn (new Vector2 (player_x * tile_size, player_y * tile_size));
 
-			if (doSearch || prev_x != player_x || prev_y != player_y) {
-				openList.Clear ();
-				closedList.Clear ();
-				path.Clear ();
-
-				goal_found = false;
-				openList.Add (new Node () {
-					X = player_x,
-					Y = player_y,
-					G = 0,
-					H = Math.Abs(player_x - goal_x) + Math.Abs(player_y - goal_y),
-					F = Math.Abs(player_x - goal_x) + Math.Abs(player_y - goal_y),
-					Parent = null
-				});
-
+			if (doSearch || prev_x != player.X || prev_y != player.Y) {
+				search.Start (
+					map.Get (player.X, player.Y),
+					map.Get (goal.X, goal.Y));
 			}
 
-			if (goal_found == false) {
-				IterativeSearch ();
-			}
 
+
+			search.Iterative (2);
             
 
 
@@ -330,36 +203,14 @@ namespace yolo
 		protected override void Draw (GameTime gameTime)
 		{
 			graphics.GraphicsDevice.Clear (Color.CornflowerBlue);
-			int offset = tile_size / 2 - player_size / 2;
+
 			//TODO: Add your drawing code here
 			spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend,null,null, null,null,Matrix.Identity);
-			for (int x = 0; x < map_width; x++) {
-				for (int y = 0; y < map_height; y++) {
-					if (map[x,y] == true) {
-						spriteBatch.Draw (pixel, new Rectangle (x*tile_size, y*tile_size, tile_size, tile_size), null, Color.Black);
-					} else {
-						spriteBatch.Draw (pixel, new Rectangle (x*tile_size, y*tile_size, tile_size, tile_size), null, Color.White);
-					}
-				}
 
+			map.Render (spriteBatch);
 
-				foreach (var node in closedList) {
-					spriteBatch.Draw (pixel, new Rectangle (node.X * tile_size + offset +2, node.Y * tile_size + offset+2, player_size+6, player_size+6), null, Color.CadetBlue);
-				}
-				foreach (var node in openList) {
-					spriteBatch.Draw (pixel, new Rectangle (node.X * tile_size + offset +1, node.Y * tile_size + offset+1, player_size+2, player_size+2), null, Color.Blue);
-				}
-				foreach (var node in path) {
-					spriteBatch.Draw (pixel, new Rectangle (node.X * tile_size + offset +1, node.Y * tile_size + offset+1, player_size+2, player_size+2), null, Color.Aqua);
-				}
+			search.Visualize (spriteBatch);
 
-				spriteBatch.Draw (pixel, new Rectangle (player_x * tile_size + offset, player_y * tile_size + offset, player_size, player_size), null, Color.IndianRed);
-				spriteBatch.Draw (pixel, new Rectangle (goal_x * tile_size + offset, goal_y * tile_size + offset, player_size, player_size), null, Color.DarkSeaGreen);
-
-				spriteBatch.Draw (pixel, new Rectangle (mouse_x*tile_size, mouse_y*tile_size, tile_size, tile_size), null, new Color(Color.GreenYellow, 50));
-
-			}
-				
 			spriteBatch.End ();
             
 			base.Draw (gameTime);
