@@ -83,6 +83,12 @@ namespace yolo
 			}
 			return min;
 		}
+			
+		public void Full(int maxIterations) {
+			while (!this.found && this.openList.Count > 0 && this.iterations < maxIterations) {
+				this.Iterative ();
+			}
+		}
 
 		public void Iterative()
 		{
