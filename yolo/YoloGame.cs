@@ -8,14 +8,7 @@ using System.Collections.Generic;
 
 namespace yolo
 {
-	class Node {
-		public int X;
-		public int Y;
-		public Node Parent;
-		public int F; // G + H
-		public int G; // 
-		public int H;
-	}
+	
 	/// <summary>
 	/// This is the main type for your game.
 	/// </summary>
@@ -28,17 +21,12 @@ namespace yolo
 		Map map;
 		Search search;
 
-		int map_width = 40;
-		int map_height = 44;
+		int map_width = 1024;
+		int map_height = 1024;
 
 		Actor player;
 		Actor goal;
 
-		/*
-		int mouse_x = 0;
-		int mouse_y = 0;
-		*/
-	
 
 		Camera camera = new Camera ();
 
@@ -207,7 +195,7 @@ namespace yolo
 			//TODO: Add your drawing code here
 			spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend,null,null, null,null,Matrix.Identity);
 
-			map.Render (spriteBatch);
+			map.Render (spriteBatch, new Vector2(0,0), new Vector2(this.GraphicsDevice.Viewport.Width, this.GraphicsDevice.Viewport.Height));
 
 			search.Visualize (spriteBatch);
 

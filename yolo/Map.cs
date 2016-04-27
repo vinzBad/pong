@@ -151,6 +151,59 @@ namespace yolo
 			}
 		}
 
+		public void Render(SpriteBatch batch, Vector2 min, Vector2 max)
+		{
+			Render (batch, (int) min.X / tile_size, (int) min.Y / tile_size, (int) max.X / tile_size, (int) max.Y / tile_size);
+		}
+
+		public void Render(SpriteBatch batch, int minX, int minY, int maxX, int maxY)
+		{
+			if (pixel == null) {
+				pixel = new Texture2D (batch.GraphicsDevice, 1, 1);
+				pixel.SetData<Color> (new Color[]{ Color.White });
+			}
+
+			// bounds check
+			if (!Inside (minX, minY) || !Inside (maxX, maxY))
+				return;
+
+			rect_dst.Width = tile_size;
+			rect_dst.Height = tile_size;
+
+
+			for (int x = minX; x < maxX; x++) {
+				for (int y = minY; y < maxY; y++) {
+
+					var tile = this.Get (x, y);
+
+					if (tile.Type == TileType.FLOOR)
+						tile_tint = Color.Wheat;
+
+					if (tile.Type == TileType.WALL)
+						tile_tint = Color.Black;
+
+					rect_dst.X = x * this.tile_size;
+					rect_dst.Y = y * this.tile_size;
+
+					batch.Draw (pixel, rect_dst, tile_tint);
+				}
+
+			}
+
+			for (int i = 0; i < actors.Count; i++) {
+				var actor = actors [i];
+
+				rect_dst.X = actor.X * this.tile_size + actor.Width / 2;
+				rect_dst.Y = actor.Y * this.tile_size + actor.Height / 2;
+				rect_dst.Width = actor.Width;
+				rect_dst.Height = actor.Height;
+
+				tile_tint = actor.Color;
+
+				batch.Draw (pixel, rect_dst, tile_tint);
+			}
+		}
+
 		public void Overlay (SpriteBatch batch, int x, int y, int size, Color color)
 		{
 			if (pixel == null) {
