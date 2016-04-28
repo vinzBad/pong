@@ -14,6 +14,7 @@ namespace yolo
 		int width;
 		int height;
 		int tile_size;
+		public int TileSize { get { return this.tile_size; } }
 
 		Color tile_tint = Color.White;
 		Rectangle rect_dst;
@@ -149,11 +150,21 @@ namespace yolo
 			}
 		}
 
+
+
 		public void Render(SpriteBatch batch, Vector2 min, Vector2 max)
 		{
-			Render (batch, (int) min.X / tile_size, (int) min.Y / tile_size, (int) max.X / tile_size, (int) max.Y / tile_size);
+			// add nice 1 tile padding, so we dont see the edges
+			Render (batch, (int) min.X / tile_size - 1, (int) min.Y / tile_size - 1, (int) max.X / tile_size + 1, (int) max.Y / tile_size + 1);
 		}
 
+		int Clamp(int val, int min, int max) {
+			if (val < min)
+				return min;
+			if (val > max)
+				return max;
+			return val;
+		}
 		public void Render(SpriteBatch batch, int minX, int minY, int maxX, int maxY)
 		{
 			if (pixel == null) {
@@ -162,8 +173,12 @@ namespace yolo
 			}
 
 			// bounds check
-			if (!Inside (minX, minY) || !Inside (maxX, maxY))
-				return;
+			minX = Clamp(minX, 0, width);
+			maxX = Clamp (maxX, 0, width);
+			minY = Clamp (minY, 0, height);
+			maxY = Clamp (maxY, 0, height);
+
+			Console.WriteLine ("{0},{1} - {2}, {3}", minX, minY, maxX, maxY);
 
 			rect_dst.Width = tile_size;
 			rect_dst.Height = tile_size;

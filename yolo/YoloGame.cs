@@ -76,9 +76,10 @@ namespace yolo
 					} else {
 						map.Get (x, y).Type = TileType.WALL;
 					}
-				}
-			
+				}			
 			}
+
+
 
 			player = new Actor () {
 				X = 3,
@@ -128,7 +129,7 @@ namespace yolo
 
 			bool doSearch = false;
 
-			Vector2 mouse = new Vector2 (ms.Position.X, ms.Position.Y);
+			Vector2 mouse = camera.ScreenToWorld(new Vector2 (ms.Position.X, ms.Position.Y));
 
 			if (ms.LeftButton == ButtonState.Pressed) {
 				var tile = map.WorldGet (mouse);
@@ -160,12 +161,14 @@ namespace yolo
 			
 			}
 
-		
 
 			if (map.Get(player.X, player.Y).Type == TileType.WALL) {
+				// map.Get (player.X, player.Y).Type = TileType.FLOOR; // DIG THAT SHIT
 				player.X = prev_x;
 				player.Y = prev_y;
 			}
+
+			camera.CenterOn (new Vector2 (player.X * map.TileSize, player.Y * map.TileSize));
 
 			//camera.CenterOn (new Vector2 (player_x * tile_size, player_y * tile_size));
 
@@ -193,11 +196,15 @@ namespace yolo
 			graphics.GraphicsDevice.Clear (Color.CornflowerBlue);
 
 			//TODO: Add your drawing code here
-			spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend,null,null, null,null,Matrix.Identity);
+		
 
-			map.Render (spriteBatch, new Vector2(0,0), new Vector2(this.GraphicsDevice.Viewport.Width, this.GraphicsDevice.Viewport.Height));
+			spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend,null,null, null,null,camera.TranslationMatrix);
 
-			search.Visualize (spriteBatch);
+			var tl = camera.ScreenToWorld (Vector2.Zero);
+			var br = camera.ScreenToWorld (new Vector2 (this.GraphicsDevice.Viewport.Width, this.GraphicsDevice.Viewport.Height));
+			map.Render (spriteBatch, tl, br );
+
+			//search.Visualize (spriteBatch);
 
 			spriteBatch.End ();
             
